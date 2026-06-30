@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0E0F13"/>
+<title>Keystroke — Typing Speed Race</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">Keystroke<span class="logo-dot">_</span></div>
+  <div class="header-stats" id="header-stats">
+    <div class="hstat"><span class="hstat-val" id="best-wpm">0</span><span class="hstat-label">best wpm</span></div>
+    <div class="hstat"><span class="hstat-val" id="races-played">0</span><span class="hstat-label">races</span></div>
+    <div class="hstat win-stat"><span class="hstat-val" id="win-record">0–0</span><span class="hstat-label">vs bot W–L</span></div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-toggle" id="sound-toggle" onclick="toggleSound()" title="Toggle sound">🔊</button>
+    <button class="leaderboard-toggle" id="leaderboard-toggle" onclick="toggleLeaderboard()">🏆 Leaderboard</button>
+  </div>
+</header>
+
+<div class="app-shell">
+
+  <!-- Main Game Column -->
+  <main class="main-col">
+
+    <!-- Mode Bar -->
+    <div class="mode-bar">
+      <div class="mode-group">
+        <span class="mode-group-label">Text</span>
+        <button class="mode-btn active" data-mode="quotes" onclick="setMode(this)">Quotes</button>
+        <button class="mode-btn" data-mode="words" onclick="setMode(this)">Common words</button>
+        <button class="mode-btn" data-mode="code" onclick="setMode(this)">Code</button>
+        <button class="mode-btn" data-mode="punctuation" onclick="setMode(this)">Punctuation</button>
+      </div>
+      <div class="mode-group">
+        <span class="mode-group-label">Time</span>
+        <button class="mode-btn" data-time="15" onclick="setTime(this)">15s</button>
+        <button class="mode-btn active" data-time="30" onclick="setTime(this)">30s</button>
+        <button class="mode-btn" data-time="60" onclick="setTime(this)">60s</button>
+        <button class="mode-btn" data-time="120" onclick="setTime(this)">120s</button>
+      </div>
+      <div class="mode-group">
+        <span class="mode-group-label">Opponent</span>
+        <button class="opp-btn" data-opp="none" onclick="setOpponent(this)">Solo</button>
+        <button class="opp-btn" data-opp="turtle" onclick="setOpponent(this)">🐢 Turtle <span class="opp-wpm">30</span></button>
+        <button class="opp-btn active" data-opp="rival" onclick="setOpponent(this)">🦊 Rival <span class="opp-wpm">60</span></button>
+        <button class="opp-btn" data-opp="cyborg" onclick="setOpponent(this)">🤖 Cyborg <span class="opp-wpm">90</span></button>
+        <button class="opp-btn" data-opp="lightning" onclick="setOpponent(this)">⚡ Lightning <span class="opp-wpm">120</span></button>
+        <button class="opp-btn" data-opp="ghost" onclick="setOpponent(this)">👻 Your PB</button>
+      </div>
+    </div>
+
+    <!-- Race Track -->
+    <div class="race-track-wrap" id="race-track-wrap">
+      <div class="race-lane">
+        <div class="race-lane-label">You</div>
+        <div class="race-lane-track">
+          <div class="race-runner race-runner-you" id="runner-you">🏃</div>
+        </div>
+      </div>
+      <div class="race-lane" id="opp-lane">
+        <div class="race-lane-label" id="opp-lane-label">🦊 Rival</div>
+        <div class="race-lane-track">
+          <div class="race-runner race-runner-opp" id="runner-opp">🦊</div>
+        </div>
+      </div>
+      <div class="race-finish-flag">🏁</div>
+    </div>
+
+    <!-- Live Stat Strip -->
+    <div class="live-stats" id="live-stats">
+      <div class="lstat">
+        <span class="lstat-val" id="live-wpm">0</span>
+        <span class="lstat-label">wpm</span>
+      </div>
+      <div class="lstat-divider"></div>
+      <div class="lstat">
+        <span class="lstat-val" id="live-acc">100%</span>
+        <span class="lstat-label">accuracy</span>
+      </div>
+      <div class="lstat-divider"></div>
+      <div class="lstat">
+        <span class="lstat-val" id="live-time">30</span>
+        <span class="lstat-label">seconds</span>
+      </div>
+      <div class="lstat-divider"></div>
+      <div class="lstat">
+        <span class="lstat-val" id="live-errors">0</span>
+        <span class="lstat-label">errors</span>
+      </div>
+      <div class="lstat-divider"></div>
+      <div class="lstat combo-stat">
+        <span class="lstat-val" id="live-combo">0×</span>
+        <span class="lstat-label">combo</span>
+      </div>
+    </div>
+
+    <!-- Typing Zone -->
+    <div class="type-zone" id="type-zone" tabindex="0">
+      <div class="type-text" id="type-text"></div>
+      <input type="text" id="hidden-input" class="hidden-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>
+      <div class="type-zone-hint" id="type-zone-hint">Click here and start typing to begin ✦</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <button class="restart-btn" onclick="restartRace()">
+        <span class="restart-icon">↻</span> Restart <kbd>Tab</kbd>
+      </button>
+      <div class="controls-hint">Press <kbd>Esc</kbd> then <kbd>Enter</kbd> anytime to restart</div>
+    </div>
+
+  </main>
+
+  <!-- Leaderboard Sidebar -->
+  <aside class="leaderboard-panel" id="leaderboard-panel">
+    <div class="lb-header">
+      <span class="lb-title">🏆 Local Leaderboard</span>
+      <button class="lb-clear" onclick="clearLeaderboard()">Clear</button>
+    </div>
+    <div class="lb-list" id="lb-list">
+      <div class="lb-empty">Finish a race to claim the top spot ✦</div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Results Modal -->
+<div class="results-overlay" id="results-overlay">
+  <div class="results-card" id="results-card">
+    <div class="results-header">
+      <span class="results-title" id="results-title">Race complete</span>
+      <button class="results-close" onclick="closeResults()">×</button>
+    </div>
+
+    <div class="race-outcome hidden" id="race-outcome">
+      <span class="race-outcome-icon" id="race-outcome-icon">🏆</span>
+      <span class="race-outcome-text" id="race-outcome-text">You won!</span>
+    </div>
+
+    <div class="results-hero">
+      <div class="results-wpm-block">
+        <span class="results-wpm" id="results-wpm">0</span>
+        <span class="results-wpm-label">words per minute</span>
+      </div>
+      <canvas id="wpm-graph" class="wpm-graph" width="500" height="160"></canvas>
+    </div>
+
+    <div class="results-grid">
+      <div class="result-stat">
+        <span class="result-stat-val" id="results-raw">0</span>
+        <span class="result-stat-label">raw wpm</span>
+      </div>
+      <div class="result-stat">
+        <span class="result-stat-val" id="results-acc">0%</span>
+        <span class="result-stat-label">accuracy</span>
+      </div>
+      <div class="result-stat">
+        <span class="result-stat-val" id="results-chars">0</span>
+        <span class="result-stat-label">characters</span>
+      </div>
+      <div class="result-stat">
+        <span class="result-stat-val" id="results-errors">0</span>
+        <span class="result-stat-label">errors</span>
+      </div>
+      <div class="result-stat">
+        <span class="result-stat-val" id="results-combo">0</span>
+        <span class="result-stat-label">best combo</span>
+      </div>
+      <div class="result-stat">
+        <span class="result-stat-val" id="results-time">0s</span>
+        <span class="result-stat-label">time</span>
+      </div>
+    </div>
+
+    <div class="results-save-row" id="results-save-row">
+      <input type="text" id="results-name" class="results-name-input" placeholder="Your name for the leaderboard" maxlength="16"/>
+      <button class="results-save-btn" onclick="saveResultToLeaderboard()">Save score</button>
+    </div>
+    <div class="results-saved-msg hidden" id="results-saved-msg">✦ Saved to leaderboard!</div>
+
+    <div class="results-actions">
+      <button class="results-next-btn" onclick="restartRace()">Race again <kbd>Tab</kbd></button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Footer -->
+<footer class="footer">Keystroke · Practice makes fingers faster · No signup needed</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
